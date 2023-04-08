@@ -1,7 +1,7 @@
 import { Address, toNano } from 'ton-core';
 import { Main } from '../wrappers/Main';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
-import { createKeys } from './utils/keys';
+import { createKeys } from '../helpers/keys';
 
 export async function run(provider: NetworkProvider) {
     const main = provider.open(Main.createFromConfig({
@@ -18,5 +18,3 @@ export async function run(provider: NetworkProvider) {
 
     // run methods on `main`
 }
-
-// 'EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX'

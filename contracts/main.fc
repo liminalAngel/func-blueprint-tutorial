@@ -1,7 +1,7 @@
 #include "imports/stdlib.fc";
 #include "imports/params.fc";
 
-const int min_tons_for_storage = 100000000; ;; 0.1 TON
+const int min_tons_for_storage = 1000000000; 
 
 ;; recv_internal
 ;; 1. Update smc code
@@ -32,6 +32,12 @@ const int min_tons_for_storage = 100000000; ;; 0.1 TON
     );
 }
 
+int get_smc_balance() method_id {
+    [int balance, _] = get_balance();
+
+    return balance;
+}
+
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
     slice cs = in_msg_full.begin_parse();
     int flags = cs~load_uint(4);
@@ -47,7 +53,6 @@ const int min_tons_for_storage = 100000000; ;; 0.1 TON
     (int seqno, int public_key, slice owner_address) = load_data();
 
     int op = in_msg_body~load_uint(32);  
-    int query_id = in_msg_body~load_uint(64);
 
     if(op == "deposit"c) {
         return ();
@@ -58,7 +63,7 @@ const int min_tons_for_storage = 100000000; ;; 0.1 TON
             cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
 
             cell msg = begin_cell()
-                .store_uint(0x18, 6) ;; nonbounceable - 0x10, logs - 0x30
+                .store_uint(0x18, 6) ;; nobounceable - 0x10, logs - 0x30
                 .store_slice(owner_address)
                 .store_coins(0)
                 .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
@@ -67,7 +72,8 @@ const int min_tons_for_storage = 100000000; ;; 0.1 TON
             .end_cell();
         send_raw_message(msg, 64);
         }
-  
+
+        return ();
     }
 
     throw_unless(411, equal_slices(sender_address, owner_address));
@@ -78,22 +84,26 @@ const int min_tons_for_storage = 100000000; ;; 0.1 TON
         force_chain(new_owner_address);
 
         store_data(seqno, public_key, new_owner_address);
+
+        return ();
     }
 
     if(op == "withdraw_funds"c) {
         int withdraw_amount = in_msg_body~load_coins();
 
-        throw_unless(412, my_balance >= withdraw_amount);
+        throw_unless(412, get_smc_balance() >= withdraw_amount);
 
         int send_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
 
         cell msg = begin_cell()
                 .store_uint(0x18, 6)
                 .store_slice(owner_address)
-                .store_coins(send_amount)
+                .store_coins(withdraw_amount)
                 .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
             .end_cell();
         send_raw_message(msg, 1);
+
+        return ();
     }
 
     if(op == "update_code"c) {
@@ -126,7 +136,7 @@ const int min_tons_for_storage = 100000000; ;; 0.1 TON
     accept_message();
     tmp_in_msg~touch();
 
-    int op = in_msg~load_uint(32);
+    int op = tmp_in_msg~load_uint(32);
 
     if(op == "selfdestruct"c) {
         cell msg = begin_cell()
