@@ -114,13 +114,18 @@ export class Main implements Contract {
         );
     }
 
-    async getBalance(provider: ContractProvider) : Promise<number> {
+    async getBalance(provider: ContractProvider) : Promise<bigint> {
         const result = await provider.get('get_smc_balance', []);
-        return result.stack.readNumber();
+        return result.stack.readBigNumber();
     }
 
     async getSeqno(provider: ContractProvider) : Promise<number> {
         const result = await provider.get('get_seqno', []);
         return result.stack.readNumber();
+    }
+
+    async getOwner(provider: ContractProvider) : Promise<Address> {
+        const result = await provider.get('get_owner', []);
+        return result.stack.readAddress();
     }
 }

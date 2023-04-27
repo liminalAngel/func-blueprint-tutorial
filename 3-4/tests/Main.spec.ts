@@ -86,9 +86,12 @@ describe('Main', () => {
     });
 
     it('should change owner', async () => {
+      const ownerAddressBefore = owner.address;
+      const newOwnerAddress = randomAddress();
+
       const changeOwnerResult = await main.sendChangeOwner(owner.getSender(), {
         value: toNano('0.5'),
-        newOwner: randomAddress()
+        newOwner: newOwnerAddress
       });
 
       expect(changeOwnerResult.transactions).toHaveTransaction({
@@ -96,10 +99,16 @@ describe('Main', () => {
         to: main.address,
         success: true,
       });
+
+      const currentOwnerAddress = await main.getOwner();
+
+      expect(currentOwnerAddress).toEqualAddress(newOwnerAddress);
     });
 
     it('should fail on wrong signature', async () => {
       const badKp = await randomKp();
+
+      expect.assertions(2);
 
       await expect(
         main.sendExtMessage({
@@ -114,10 +123,15 @@ describe('Main', () => {
 
     it('should sign', async () => {
 
-      await main.sendExtMessage({
+      const selfDestructResult = await main.sendExtMessage({
           opCode: Opcodes.selfdestruct,
           signFunc: (buf) => sign(buf, kp.secretKey),
           seqno: 0
+      });
+
+      expect(selfDestructResult.transactions).toHaveTransaction({
+        from: main.address,
+        to: owner.address,
       });
 
     });
