@@ -1,15 +1,18 @@
 import { Address, beginCell, toNano } from 'ton-core';
-import { NftCollection } from '../wrappers/NftCollection';
+import { NftCollection, buildNftCollectionContentCell } from '../wrappers/NftCollection';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
 
 export async function run(provider: NetworkProvider) {
 
-    const randomSeed = Math.floor(Math.random() * 10000);
-
     const nftCollection = provider.open(NftCollection.createFromConfig({
         ownerAddress: provider.sender().address as Address,
         nextItemIndex: 0,
-        collectionContent: beginCell().storeUint(randomSeed, 256).endCell(),
+        collectionContent: buildNftCollectionContentCell(
+            {
+                collectionContent: '',
+                commonContent: 'tonstorage://0D51A77C4BE0E59ED44D149B5FE32332AE726FE09AE83E84E363FC50A21DFB56/'
+            }
+        ),
         nftItemCode: await compile('NftItem'),
         royaltyParams: {
             royaltyFactor: 15,

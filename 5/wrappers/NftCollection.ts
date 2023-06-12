@@ -1,5 +1,6 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, Sender, SendMode } from 'ton-core';
 import { CollectionMint, MintValue } from './helpers/collectionHelpers';
+import { encodeOffChainContent } from './helpers/content';
 
 export type RoyaltyParams = {
     royaltyFactor: number;
@@ -14,6 +15,25 @@ export type NftCollectionConfig = {
     nftItemCode: Cell;
     royaltyParams: RoyaltyParams;
 };
+
+export type NftCollectionContent = {
+    collectionContent: string;
+    commonContent: string;
+};
+
+export function buildNftCollectionContentCell(data: NftCollectionContent): Cell {
+    let contentCell = beginCell();
+
+    let collectionContent = encodeOffChainContent(data.collectionContent);
+
+    let commonContent = beginCell();
+    commonContent.storeStringTail(data.commonContent);
+
+    contentCell.storeRef(collectionContent);
+    contentCell.storeRef(commonContent);
+
+    return contentCell.endCell();
+}
 
 export function nftCollectionConfigToCell(config: NftCollectionConfig): Cell {
     return beginCell()

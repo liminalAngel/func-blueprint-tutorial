@@ -14,7 +14,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
             amount: toNano('0.05'),
             itemIndex: 0,
             itemOwnerAddress: provider.sender().address as Address,
-            itemContent: '123',
+            itemContent: 'my_nft.json',
             queryId: Date.now()
         });
 
